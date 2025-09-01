@@ -1,26 +1,51 @@
 import tkinter as tk
 import threading, time, shutil, os
 from tkinter import messagebox, simpledialog
-from db_init import init_db, get_db, audit
-import source.books, source.borrow, source.user_admin as user_admin
+from db_init import DB, init_db, get_db, audit
+import books, borrow, user_admin
+import login   # để gọi lại màn hình login
+from ui_theme import bg_color, btn_style, title_style   # lấy style từ ui_theme.py
 
 BACKUP_DIR = "backup"
 if not os.path.exists(BACKUP_DIR):
     os.makedirs(BACKUP_DIR)
 
+LOGO = "logo.png"   # file ảnh logo
+
 class App:
     def __init__(self, master, user_id, role):
         self.master, self.user_id, self.role = master, user_id, role
         master.title(f"Library Manager - Role: {role}")
-        tk.Button(master, text="📚 Manage Books", command=self.manage_books).pack(fill="x")
-        tk.Button(master, text="🔍 Search ISBN", command=self.search_isbn).pack(fill="x")
-        tk.Button(master, text="📖 Borrow/Return", command=self.borrow_books).pack(fill="x")
-        tk.Button(master, text="👤 User Admin", command=self.user_admin).pack(fill="x")
-        tk.Button(master, text="📌 Audit Logs", command=self.show_audit).pack(fill="x")
-        tk.Button(master, text="📤 Backup Now", command=self.backup).pack(fill="x")
+        master.geometry("900x600")
+        master.configure(bg=bg_color)  # nền từ UI_them
 
+        # === Container chính ===
+        container = tk.Frame(master, bg="white", bd=2, relief="groove")
+        container.place(relx=0.5, rely=0.5, anchor="center", width=800, height=500)
+
+        # === Tiêu đề ===
+        title = tk.Label(container, text="📚 Library Manager", **title_style)
+        title.pack(pady=20)
+
+        # === Frame menu nút ===
+        menu_frame = tk.Frame(container, bg="white")
+        menu_frame.pack(pady=20)
+
+        # === Các nút chức năng ===
+        tk.Button(menu_frame, text="📖 Manage Books", command=self.manage_books, **btn_style).pack(pady=5)
+        tk.Button(menu_frame, text="🔍 Search ISBN", command=self.search_isbn, **btn_style).pack(pady=5)
+        tk.Button(menu_frame, text="📗 Borrow / Return", command=self.borrow_books, **btn_style).pack(pady=5)
+        tk.Button(menu_frame, text="👤 User Admin", command=self.user_admin, **btn_style).pack(pady=5)
+        tk.Button(menu_frame, text="📝 Audit Logs", command=self.show_audit, **btn_style).pack(pady=5)
+        tk.Button(menu_frame, text="💾 Backup Now", command=self.backup, **btn_style).pack(pady=5)
+
+        # === Nút Logout ===
+        tk.Button(menu_frame, text="🚪 Logout", command=self.logout, **btn_style, bg="#e74c3c", activebackground="#c0392b").pack(pady=20)
+
+        # auto backup chạy nền
         threading.Thread(target=self.auto_backup, daemon=True).start()
 
+    # ========= Các hàm giữ nguyên =========
     def manage_books(self):
         if self.role not in ("admin", "staff"):
             return messagebox.showerror("Denied", "No permission")
@@ -80,15 +105,23 @@ class App:
             txt.insert("end", f"{r}\n")
         conn.close()
 
-    def backup(self):
+    def backup(self):        
         fname = os.path.join(BACKUP_DIR, f"backup_{int(time.time())}.db")
-        shutil.copy("library.db", fname)
-        messagebox.showinfo("Backup", f"Saved {fname}")
+        shutil.copy(DB, fname)
 
     def auto_backup(self):
         while True:
             self.backup()
             time.sleep(600)
+
+    # ===== Hàm Logout =====
+    def logout(self):
+        self.master.destroy()
+        root = tk.Tk()
+        root.state("zoomed")
+        login.LoginWindow(root)
+        root.mainloop()
+
 
 # ======== AUTO INIT ADMIN USER ==========
 def ensure_admin_user():
@@ -96,7 +129,6 @@ def ensure_admin_user():
     c = conn.cursor()
     c.execute("SELECT id FROM users WHERE username='admin'")
     if not c.fetchone():
-        # tạo admin/admin
         user_admin.create_user("system", "admin", "admin", "admin")
         print("[INFO] Default admin user created (username=admin, password=admin)")
     conn.close()
@@ -104,8 +136,7 @@ def ensure_admin_user():
 
 if __name__ == "__main__":
     init_db()
-    ensure_admin_user()   # auto add admin nếu chưa có
-    import login
+    ensure_admin_user()
     root = tk.Tk()
     root.state("zoomed") 
     login.LoginWindow(root)
