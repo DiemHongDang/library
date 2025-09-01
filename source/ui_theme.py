@@ -20,13 +20,17 @@ btn_style = {
 }
 # =======================================================
 
+import ttkbootstrap as tb
+from PIL import Image, ImageTk, ImageEnhance
+import tkinter as tk
+
 def apply_theme(master, title="Library App", width=900, height=600):
-    """Áp dụng style business + background"""
+    """Áp dụng style business + background logo full window"""
     master.title(title)
     master.geometry(f"{width}x{height}")
     master.resizable(True, True)
 
-    # style business sáng (flatly = xanh dương sáng, có thể đổi thành cosmo, lumen,...)
+    # style business
     style = tb.Style("flatly")
 
     # căn giữa cửa sổ
@@ -38,20 +42,28 @@ def apply_theme(master, title="Library App", width=900, height=600):
 
     # ===== Background =====
     try:
-        bg_img = Image.open("image/logo.png").resize((screen_width, screen_height))
-        bg_img = bg_img.convert("RGBA")
+        original_img = Image.open("image/logo.png").convert("RGBA")
 
-        # Làm mờ nhẹ
-        alpha = 100
-        for y in range(bg_img.size[1]):
-            for x in range(bg_img.size[0]):
-                r, g, b, a = bg_img.getpixel((x, y))
-                bg_img.putpixel((x, y), (r, g, b, alpha))
+        # Làm mờ ảnh một chút (opacity ~80%)
+        enhancer = ImageEnhance.Brightness(original_img)
+        original_img = enhancer.enhance(0.8)
 
-        bg_photo = ImageTk.PhotoImage(bg_img)
-        bg_label = tb.Label(master, image=bg_photo)
-        bg_label.image = bg_photo  # giữ tham chiếu tránh bị GC
+        def resize_bg(event=None):
+            w, h = master.winfo_width(), master.winfo_height()
+            if w <= 1 or h <= 1:
+                return
+            resized = original_img.resize((w, h), Image.Resampling.LANCZOS)
+            bg_photo = ImageTk.PhotoImage(resized)
+            bg_label.config(image=bg_photo)
+            bg_label.image = bg_photo
+
+        bg_label = tk.Label(master)
         bg_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        # auto resize khi thay đổi kích thước window
+        master.bind("<Configure>", resize_bg)
+        resize_bg()
+
     except Exception as e:
         print("⚠️ Không load được background:", e)
 

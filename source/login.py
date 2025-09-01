@@ -15,14 +15,21 @@ class LoginWindow:
         frame = tb.Frame(master, padding=30, bootstyle="light")
         frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        tb.Label(frame, text="Library Management - Quản lý thư viện", 
+        tb.Label(frame, text="Library Management - Quản lý Thư viện", 
                  font=("Helvetica", 20, "bold")).pack(pady=10)
 
+        # Username entry
         self.username = tb.Entry(frame, bootstyle=INFO, font=("Helvetica", 12))
-        self.username.insert(0, "admin")
+        self.username.insert(0, "username")
+        self.username.bind("<FocusIn>", lambda e: self._clear_placeholder(self.username, "username"))
+        self.username.bind("<FocusOut>", lambda e: self._add_placeholder(self.username, "username"))
         self.username.pack(pady=10, fill=X)
 
-        self.password = tb.Entry(frame, show="*", bootstyle=INFO, font=("Helvetica", 12))
+        # Password entry
+        self.password = tb.Entry(frame, bootstyle=INFO, font=("Helvetica", 12))
+        self.password.insert(0, "password")
+        self.password.bind("<FocusIn>", lambda e: self._clear_placeholder(self.password, "password", is_password=True))
+        self.password.bind("<FocusOut>", lambda e: self._add_placeholder(self.password, "password", is_password=True))
         self.password.pack(pady=10, fill=X)
 
         login_btn = tb.Button(frame, text="Login", bootstyle=WARNING, command=self.login)
@@ -50,3 +57,16 @@ class LoginWindow:
             root.mainloop()
         else:
             messagebox.showerror("Error", "Invalid login")
+    def _clear_placeholder(self, entry, placeholder, is_password=False):
+        """Xóa placeholder khi focus"""
+        if entry.get() == placeholder:
+            entry.delete(0, "end")
+            if is_password:
+                entry.config(show="*")
+
+    def _add_placeholder(self, entry, placeholder, is_password=False):
+        """Thêm lại placeholder khi để trống"""
+        if entry.get() == "":
+            entry.insert(0, placeholder)
+            if is_password:
+                entry.config(show="") 

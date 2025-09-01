@@ -1,30 +1,29 @@
 import tkinter as tk
 import threading, time, shutil, os
 from tkinter import messagebox, simpledialog
-from db_init import DB, init_db, get_db, audit
+from db_init import DB, init_db, get_db
 import books, borrow, user_admin
 import login   # để gọi lại màn hình login
-from ui_theme import bg_color, btn_style, title_style   # lấy style từ ui_theme.py
+from ui_theme import apply_theme,  btn_style, title_style   # lấy style + theme
 
 BACKUP_DIR = "backup"
 if not os.path.exists(BACKUP_DIR):
     os.makedirs(BACKUP_DIR)
 
-LOGO = "logo.png"   # file ảnh logo
 
 class App:
     def __init__(self, master, user_id, role):
         self.master, self.user_id, self.role = master, user_id, role
-        master.title(f"Library Manager - Role: {role}")
-        master.geometry("900x600")
-        master.configure(bg=bg_color)  # nền từ UI_them
+
+        # Áp dụng theme business + background
+        apply_theme(master, title=f"Library Manager - Role: {role}", width=900, height=600)
 
         # === Container chính ===
         container = tk.Frame(master, bg="white", bd=2, relief="groove")
-        container.place(relx=0.5, rely=0.5, anchor="center", width=800, height=500)
+        container.place(relx=0.5, rely=0.5, anchor="center", width=800, height=800)
 
         # === Tiêu đề ===
-        title = tk.Label(container, text="📚 Library Manager", **title_style)
+        title = tk.Label(container, text="📚 Library Manager - Quản lý Thư viện", **title_style)
         title.pack(pady=20)
 
         # === Frame menu nút ===
@@ -38,11 +37,9 @@ class App:
         tk.Button(menu_frame, text="👤 User Admin", command=self.user_admin, **btn_style).pack(pady=5)
         tk.Button(menu_frame, text="📝 Audit Logs", command=self.show_audit, **btn_style).pack(pady=5)
         tk.Button(menu_frame, text="💾 Backup Now", command=self.backup, **btn_style).pack(pady=5)
-
-        # === Nút Logout ===
-        tk.Button(menu_frame, text="🚪 Logout", command=self.logout, **btn_style, bg="#e74c3c", activebackground="#c0392b").pack(pady=20)
-
-        # auto backup chạy nền
+        tk.Button(menu_frame, text="🚪 Logout", command=self.logout, **btn_style).pack(pady=5)
+        tk.Button(menu_frame, text="❌ Exit", command=master.quit, **btn_style).pack(pady=5)
+            # auto backup chạy nền
         threading.Thread(target=self.auto_backup, daemon=True).start()
 
     # ========= Các hàm giữ nguyên =========
@@ -117,8 +114,12 @@ class App:
     # ===== Hàm Logout =====
     def logout(self):
         self.master.destroy()
+        import login  # chắc chắn import đúng module login
+        from ui_theme import apply_theme  # nếu bạn để apply_theme trong file style.py
         root = tk.Tk()
         root.state("zoomed")
+        # Áp dụng lại theme trước khi gọi LoginWindow
+        apply_theme(root, title="Library Manager - Login")
         login.LoginWindow(root)
         root.mainloop()
 
