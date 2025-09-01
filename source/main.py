@@ -2,7 +2,7 @@ import tkinter as tk
 import threading, time, shutil, os
 from tkinter import messagebox, simpledialog
 from db_init import init_db, get_db, audit
-import books, borrow, source.user_admin as user_admin
+import source.books, source.borrow, source.user_admin as user_admin
 
 BACKUP_DIR = "backup"
 if not os.path.exists(BACKUP_DIR):
