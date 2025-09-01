@@ -1,0 +1,6 @@
+tk
+Pillow
+qrcode
+pyzbar
+opencv-python
+bcrypt
